@@ -1,0 +1,506 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkVault — Save it for later</title>
+
+  <style>
+    :root {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #20231f;
+      background: #f6f7f2;
+      font-synthesis: none;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #fff;
+      border-bottom: 1px solid #e6e8df;
+      padding: 20px 24px;
+    }
+
+    .nav, main {
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -1px;
+    }
+
+    .brand span { color: #4f7c48; }
+
+    .status {
+      font-size: 12px;
+      color: #467442;
+      background: #eaf4e6;
+      border-radius: 20px;
+      padding: 7px 11px;
+    }
+
+    main { padding: 40px 24px 60px; }
+
+    .intro { margin-bottom: 28px; }
+
+    h1 {
+      font-size: clamp(28px, 5vw, 40px);
+      letter-spacing: -1.5px;
+      margin: 0 0 8px;
+    }
+
+    .muted { color: #74796f; line-height: 1.6; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 340px minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .panel, .bookmark {
+      background: white;
+      border: 1px solid #e6e8df;
+      border-radius: 16px;
+      padding: 22px;
+    }
+
+    h2 {
+      font-size: 17px;
+      margin: 0 0 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 650;
+      margin: 16px 0 7px;
+    }
+
+    input, textarea {
+      width: 100%;
+      border: 1px solid #dfe2d8;
+      background: #fff;
+      border-radius: 9px;
+      padding: 11px 12px;
+      font: inherit;
+      font-size: 14px;
+      outline: none;
+    }
+
+    input:focus, textarea:focus {
+      border-color: #6a9360;
+      box-shadow: 0 0 0 3px #6a936018;
+    }
+
+    textarea { resize: vertical; min-height: 90px; }
+
+    button {
+      cursor: pointer;
+      border: 0;
+      border-radius: 9px;
+      padding: 10px 14px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: #416d3b;
+      color: white;
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    .primary:hover { background: #33592e; }
+
+    .secondary {
+      background: #f0f2eb;
+      color: #343a31;
+    }
+
+    .danger {
+      background: #fff0ee;
+      color: #b33d32;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .form-actions .primary { flex: 1; width: auto; }
+
+    .list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .list-header h2 { margin: 0; }
+
+    #count {
+      font-size: 12px;
+      color: #6e7569;
+      background: #e9ece4;
+      padding: 5px 9px;
+      border-radius: 20px;
+    }
+
+    #bookmarks { display: grid; gap: 12px; }
+
+    .bookmark { padding: 18px; }
+
+    .bookmark-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 12px;
+    }
+
+    .bookmark h3 {
+      font-size: 16px;
+      margin: 0 0 6px;
+      overflow-wrap: anywhere;
+    }
+
+    .bookmark a {
+      color: #527b49;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+      text-decoration: none;
+    }
+
+    .bookmark a:hover { text-decoration: underline; }
+
+    .notes {
+      color: #6f746b;
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      margin: 12px 0;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 12px 0;
+    }
+
+    .tag {
+      font-size: 11px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      background: #edf3e9;
+      color: #456c3e;
+    }
+
+    .bookmark-actions {
+      display: flex;
+      gap: 8px;
+      border-top: 1px solid #f0f1ec;
+      padding-top: 12px;
+      margin-top: 12px;
+    }
+
+    .bookmark-actions button { padding: 8px 11px; }
+
+    .empty {
+      border: 1px dashed #d7dbd0;
+      padding: 36px 20px;
+      text-align: center;
+      border-radius: 14px;
+      color: #777d72;
+      line-height: 1.7;
+    }
+
+    #message {
+      font-size: 13px;
+      margin: 0 0 16px;
+      line-height: 1.5;
+    }
+
+    #message.error { color: #b33d32; }
+    #message.success { color: #3c7338; }
+
+    @media (max-width: 760px) {
+      .layout { grid-template-columns: 1fr; }
+      main { padding: 28px 16px 40px; }
+      header { padding: 18px 16px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="nav">
+      <div class="brand">Link<span>Vault</span></div>
+      <div class="status">● Personal library</div>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <h1>Your corner of the internet.</h1>
+      <div class="muted">
+        Save useful links, add your notes, and find them whenever you need them.
+      </div>
+    </section>
+
+    <div id="message" role="status" aria-live="polite"></div>
+
+    <div class="layout">
+      <section class="panel">
+        <h2 id="form-title">Save a new link</h2>
+
+        <form id="link-form">
+          <label for="url">URL *</label>
+          <input id="url" type="url" placeholder="https://example.com"
+                 required>
+
+          <label for="title">Title *</label>
+          <input id="title" maxlength="255"
+                 placeholder="What is this link about?" required>
+
+          <label for="notes">Notes</label>
+          <textarea id="notes"
+                    placeholder="Why did you save this?"></textarea>
+
+          <label for="tags">Tags</label>
+          <input id="tags" placeholder="golang, tutorials, ideas">
+
+          <div class="form-actions">
+            <button class="primary" type="submit" id="save-button">
+              Save bookmark
+            </button>
+            <button class="secondary" type="button" id="cancel-button"
+                    hidden>Cancel</button>
+          </div>
+        </form>
+      </section>
+
+      <section>
+        <div class="list-header">
+          <h2>Your bookmarks</h2>
+          <span id="count">0 links</span>
+        </div>
+        <div id="bookmarks">
+          <div class="empty">Loading your library...</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const API = "/links";
+
+    const form = document.getElementById("link-form");
+    const urlInput = document.getElementById("url");
+    const titleInput = document.getElementById("title");
+    const notesInput = document.getElementById("notes");
+    const tagsInput = document.getElementById("tags");
+    const list = document.getElementById("bookmarks");
+    const count = document.getElementById("count");
+    const message = document.getElementById("message");
+    const formTitle = document.getElementById("form-title");
+    const saveButton = document.getElementById("save-button");
+    const cancelButton = document.getElementById("cancel-button");
+
+    let editingId = null;
+    let links = [];
+
+    function showMessage(text, type = "success") {
+      message.textContent = text;
+      message.className = type;
+    }
+
+    async function request(path, options = {}) {
+      const response = await fetch(path, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          ...options.headers
+        }
+      });
+
+      const body = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(body.error || `Request failed (${response.status})`);
+      }
+
+      return body;
+    }
+
+    function resetForm() {
+      form.reset();
+      editingId = null;
+      formTitle.textContent = "Save a new link";
+      saveButton.textContent = "Save bookmark";
+      cancelButton.hidden = true;
+    }
+
+    function createElement(tag, className, text) {
+      const element = document.createElement(tag);
+      if (className) element.className = className;
+      if (text !== undefined) element.textContent = text;
+      return element;
+    }
+
+    function renderLinks() {
+      count.textContent = `${links.length} ${links.length === 1 ? "link" : "links"}`;
+      list.replaceChildren();
+
+      if (links.length === 0) {
+        list.append(createElement(
+          "div",
+          "empty",
+          "Your library is empty. Save your first link to get started!"
+        ));
+        return;
+      }
+
+      for (const link of links) {
+        const card = createElement("article", "bookmark");
+        const top = createElement("div", "bookmark-top");
+        const details = createElement("div");
+        const heading = createElement("h3", "", link.title);
+
+        const anchor = createElement("a", "", link.url);
+        anchor.href = link.url;
+        anchor.target = "_blank";
+        anchor.rel = "noopener noreferrer";
+
+        details.append(heading, anchor);
+        top.append(details);
+        card.append(top);
+
+        if (link.notes) {
+          card.append(createElement("p", "notes", link.notes));
+        }
+
+        if (link.tags && link.tags.length) {
+          const tags = createElement("div", "tags");
+          for (const tag of link.tags) {
+            tags.append(createElement("span", "tag", tag));
+          }
+          card.append(tags);
+        }
+
+        const actions = createElement("div", "bookmark-actions");
+        const editButton = createElement("button", "secondary", "Edit");
+        editButton.type = "button";
+        editButton.addEventListener("click", () => startEdit(link));
+
+        const deleteButton = createElement("button", "danger", "Delete");
+        deleteButton.type = "button";
+        deleteButton.addEventListener("click", () => deleteLink(link));
+
+        actions.append(editButton, deleteButton);
+        card.append(actions);
+        list.append(card);
+      }
+    }
+
+    async function loadLinks() {
+      try {
+        links = await request(API);
+        renderLinks();
+      } catch (error) {
+        list.replaceChildren(createElement(
+          "div", "empty", "Couldn't load your bookmarks. " + error.message
+        ));
+        showMessage(error.message, "error");
+      }
+    }
+
+    function startEdit(link) {
+      editingId = link.id;
+      urlInput.value = link.url;
+      titleInput.value = link.title;
+      notesInput.value = link.notes || "";
+      tagsInput.value = (link.tags || []).join(", ");
+
+      formTitle.textContent = "Edit bookmark";
+      saveButton.textContent = "Save changes";
+      cancelButton.hidden = false;
+      urlInput.focus();
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const payload = {
+        url: urlInput.value.trim(),
+        title: titleInput.value.trim(),
+        notes: notesInput.value,
+        tags: tagsInput.value.split(",")
+          .map(tag => tag.trim())
+          .filter(Boolean)
+      };
+
+      saveButton.disabled = true;
+
+      try {
+        if (editingId !== null) {
+          await request(`${API}/${editingId}`, {
+            method: "PUT",
+            body: JSON.stringify(payload)
+          });
+          showMessage("Bookmark updated successfully.");
+        } else {
+          await request(API, {
+            method: "POST",
+            body: JSON.stringify(payload)
+          });
+          showMessage("Bookmark saved successfully.");
+        }
+
+        resetForm();
+        await loadLinks();
+      } catch (error) {
+        showMessage(error.message, "error");
+      } finally {
+        saveButton.disabled = false;
+      }
+    });
+
+    async function deleteLink(link) {
+      if (!confirm(`Delete "${link.title}"?`)) return;
+
+      try {
+        await request(`${API}/${link.id}`, { method: "DELETE" });
+        if (editingId === link.id) resetForm();
+        showMessage("Bookmark deleted.");
+        await loadLinks();
+      } catch (error) {
+        showMessage(error.message, "error");
+      }
+    }
+
+    cancelButton.addEventListener("click", resetForm);
+
+    loadLinks();
+  </script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+services:
+    app:
+        build:
+            context: .
+        container_name: linkvault-app
+        environment:
+            DB_HOST: postgres
+            DB_PORT: "5432"
+            DB_USER: postgres
+            DB_PASSWORD: password
+            DB_NAME: linkvault
+            DB_SSLMODE: disable
+            PORT: "8080"
+            NODE_EXTRA_CA_CERTS: /tmp/keploy-tls/ca.crt
+            REQUESTS_CA_BUNDLE: /tmp/keploy-tls/ca.crt
+            SSL_CERT_FILE: /tmp/keploy-tls/ca.crt
+            CARGO_HTTP_CAINFO: /tmp/keploy-tls/ca.crt
+            JAVA_TOOL_OPTIONS: -Djavax.net.ssl.trustStore=/tmp/keploy-tls/truststore.jks -Djavax.net.ssl.trustStorePassword=changeit
+        depends_on:
+            keploy-agent:
+                condition: service_healthy
+        restart: unless-stopped
+        volumes:
+            - keploy-tls-certs:/tmp/keploy-tls:ro
+            - keploy-sockets-vol:/tmp
+        pid: service:keploy-agent
+        network_mode: service:keploy-agent
+    keploy-agent:
+        image: docker.io/keploy/enterprise:v3.8.78
+        container_name: keploy-v3-7ddf
+        # Capabilities required by keploy-agent for eBPF interception.
+        # Review and allow only what your security policy permits.
+        cap_add:
+            - BPF
+            - PERFMON
+            - NET_ADMIN # required for network traffic capture (scoped to container's own namespace)
+            - SYS_RESOURCE
+            - SYS_PTRACE
+            - SYS_NICE
+        # Required by keploy-agent to load eBPF under the container engine's security policy.
+        security_opt:
+            - label=disable
+        environment:
+            - BINARY_TO_DOCKER=true
+            - CERT_EXPORT_PATH=/tmp/keploy-tls
+            - KEPLOY_AGENT_TOKEN
+            - KEPLOY_DEBUG_FILE=/keploy-host/agent-debug.log
+        ports:
+            - "127.0.0.1:55249:55249"
+            - "127.0.0.1:16789:16789"
+            - "8080:8080"
+        networks:
+            default:
+                aliases:
+                    - app
+        volumes:
+            - /sys/fs/cgroup:/sys/fs/cgroup
+            - /sys/kernel/debug:/sys/kernel/debug
+            - /sys/fs/bpf:/sys/fs/bpf
+            - keploy-tls-certs:/tmp/keploy-tls
+            - /Users/namanverma/Downloads/linkvault/keploy:/keploy-host
+            - keploy-sockets-vol:/tmp
+        command:
+            - --port
+            - "55249"
+            - --proxy-port
+            - "16789"
+            - --dns-port
+            - "26789"
+            - --client-pid
+            - "88654"
+            - --mode
+            - test
+            - --is-docker
+            - --disable-mapping=false
+            - --enable-testing
+            - --config-path
+            - /Users/namanverma/Downloads/linkvault
+            - --upstream-tls-verify=false
+            - --upstream-tls-ca-cert=
+            - --build-delay
+            - "60"
+        healthcheck:
+            test:
+                - CMD
+                - /app/keploy-enterprise
+                - health
+                - --check=agent-ready
+            interval: 5s
+            timeout: 5s
+            retries: 60
+            start_period: 600s
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+volumes:
+    postgres_data:
+    keploy-tls-certs: {}
+    keploy-sockets-vol: {}
